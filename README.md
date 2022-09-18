@@ -21,3 +21,5 @@
 
 Raspberry Pi を固定する板です。
 
+[![](https://img.youtube.com/vi/P0PMpqHBn6A/0.jpg)](https://www.youtube.com/watch?v=P0PMpqHBn6A)
+
