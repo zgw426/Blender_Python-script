@@ -23,3 +23,16 @@ Raspberry Pi を固定する板です。
 
 [![](https://img.youtube.com/vi/P0PMpqHBn6A/0.jpg)](https://www.youtube.com/watch?v=P0PMpqHBn6A)
 
+### 03_wall-block.txt
+
+並べると壁になる壁ブロック
+
+[![](https://img.youtube.com/vi/JA5SUrXDHaU/0.jpg)](https://www.youtube.com/watch?v=JA5SUrXDHaU)
+
+### 04_perforated-plate.txt
+
+等間隔に丸い穴のあいた板
+
+[![](https://img.youtube.com/vi/N5YkuJW_tWA/0.jpg)](https://www.youtube.com/watch?v=N5YkuJW_tWA)
+
+
