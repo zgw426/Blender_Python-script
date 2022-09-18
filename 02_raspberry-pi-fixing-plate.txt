@@ -1,0 +1,327 @@
+##---------------------------------------##
+##
+## ラズパイ設置台
+## 
+##---------------------------------------##
+
+import bpy
+import bmesh
+import random
+import math
+
+# 変数
+obj = bpy.data.objects
+olist = [] # オブジェクトパラメータ群
+mlist = [] # マテリアル群
+alist = [] # オブジェクト編集
+
+# 1.既存要素削除
+for item in bpy.data.meshes:
+    bpy.data.meshes.remove(item)
+
+# 2.材質の定義
+random.seed(110) # 乱数のシード設定
+for i in range(100):
+    mlist.append( bpy.data.materials.new('mat{}'.format(i) ) )
+    mlist[-1].diffuse_color = (random.random(), random.random(), random.random(), 1.0)
+
+##-------------------------------##
+# (関数)ブーリアン
+def booleanFnc(obj01 , obj02):
+    bool01 = obj01.modifiers.new(type="BOOLEAN", name="bool_01")
+    bool01.object = obj02
+    bool01.operation = 'DIFFERENCE'
+    bpy.context.view_layer.objects.active = obj01
+    bpy.ops.object.modifier_apply(modifier="bool_01")
+
+# (関数)オブジェクト移動
+def moveFnc(obj01, mX, mY, mZ):
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = ( mX, mY, mZ )
+
+# (関数)オブジェクト移動2
+def moveFnc2(obj01, pnt):
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = pnt
+    
+# (関数)オブジェクト移動3 ※ flg=0 -> 現在座標 , flg=1 -> 移動
+def moveFnc3(obj01, pnt, flg ):
+    tgtX = obj01.location[0]
+    tgtY = obj01.location[1]
+    tgtZ = obj01.location[2]
+    
+    if flg[0] == 1:
+        tgtX = pnt[0]
+    if flg[1] == 1:
+        tgtY = pnt[1] 
+    if flg[2] == 1:
+        tgtZ = pnt[2]
+    
+    pnt = ( tgtX, tgtY, tgtZ )
+    
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = pnt
+    print("#2 {}".format(obj01.location) )
+    print("#3 {0} {1} {2}".format(pnt[0],pnt[1],pnt[2]) )
+
+
+# (関数)オブジェクトの回転
+# rotateFnc(obj["HOGE"], ( math.radians(90.0), 0, 0 ))
+def rotateFnc(obj01, angle):
+    bpy.context.view_layer.objects.active = obj01
+    obj01.rotation_euler = angle
+
+
+# (関数)オブジェクト非表示
+def hideFnc(obj01, setVal):
+    bpy.context.view_layer.objects.active = obj01
+    bpy.context.object.hide_set( setVal )
+
+
+# (関数)オブジェクト削除
+def deleteFnc(obj01):
+    bpy.data.objects.remove(obj01)
+
+
+# (関数)オブジェクト立方体作成
+def objCube(args):
+    bpy.ops.mesh.primitive_cube_add(location=args["location"], size=1.0 , rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"])  #材質指定
+    bpy.ops.transform.resize(value=args["size"]) #図形変形
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+# (関数)オブジェクト円柱作成
+def objCylinder(args):
+    bpy.ops.mesh.primitive_cylinder_add(location=args["location"], radius=args["radius"], depth=args["depth"], rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"]) #材質指定
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+# (関数)円錐
+def objCone(args):
+    bpy.ops.mesh.primitive_cone_add(location=args["location"],vertices=args["vertices"],radius1=args["radius1"],radius2=args["radius2"],depth=args["depth"], rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"]) #材質指定
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+# (関数)ベベル
+def bevelFnc(objVal, segmentsVal, widthVal):
+    bpy.context.view_layer.objects.active = objVal
+    context = bpy.context
+    ob = context.object
+    bm = ob.modifiers.new(name="bevel", type='BEVEL',)
+    bm.segments = segmentsVal
+    bm.width = widthVal
+    bm.custom_profile.update() 
+
+
+# オブジェクトの複製
+def objCopy(objName, new_name, pnt):
+    for obj in bpy.data.objects:
+        obj.select_set(False)
+    original_obj = bpy.data.objects[objName]
+    original_obj.select_set(True)
+    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":pnt})
+    new_obj = bpy.data.objects[objName + ".001"]
+    new_obj.name = new_name
+
+
+def changeMode():
+    print( bpy.context.mode )
+    bpy.ops.object.mode_set(mode='EDIT', toggle=False) # 編集モードに移行する
+    print( bpy.context.mode )
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    print( bpy.context.mode )
+
+# (関数)面の押し出し
+def moveMesh(objName, faceNo,pnt):
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.context.view_layer.objects.active = obj[objName]
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    # 全てのメッシュを非選択状態にする.
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # 面モードに設定.
+    bpy.ops.mesh.select_mode(type="FACE")
+    cube_bmesh = bmesh.from_edit_mesh(bpy.context.object.data)
+    cube_bmesh.faces.ensure_lookup_table()
+    cube_bmesh.faces[faceNo].select = True
+    bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":pnt} )
+
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+
+# (関数)オブジェクト作成フロー
+def creObjFlow(args):
+    # オブジェクトの作成
+    for curObj in args:
+        match curObj["OBJ"]:
+            case "CUBE":
+                objCube(curObj)
+            case "CYLINDER":
+                objCylinder(curObj)
+            case "CONE":
+                objCone(curObj)
+    # オブジェクトの編集
+    for curObj in args:
+        if "edit" in curObj:
+            for act in curObj["edit"]:
+                match act[0]:
+                    case "moveMesh":
+                        moveMesh(curObj["name"], act[1],act[2]) # 面の押し出し
+                    case "bevelFnc":
+                        bevelFnc(obj[ curObj["name"] ], act[1],act[2]) # 角丸め
+
+def editFlow(args):
+    # オブジェクトの編集
+    for curObj in args:
+        match curObj["function"]:
+            case "booleanFnc":
+                booleanFnc(obj[ curObj["args"][0] ],obj[ curObj["args"][1] ]) # 
+            case "deleteFnc":
+                deleteFnc(obj[ curObj["args"][0] ]) # 
+            case "moveFnc2":
+                moveFnc2(obj[ curObj["args"][0] ], curObj["args"][1] ) # 
+            case "moveFnc3":
+                moveFnc3(obj[ curObj["args"][0] ], curObj["args"][1], curObj["args"][2] ) # 
+
+
+##-------------------------------##
+
+
+# オブジェクトパラメータ群
+olist.append( {"OBJ": "CUBE", "name": "BASE-Plate", "location": (0,0,-1.6), "size": (71.6,127.4,3.2), "rotation": (0,0,0), "material": mlist[21],} )
+
+# 円柱(レゴ貫通穴)
+olist.append( {"OBJ": "CYLINDER","name": "LegoHole", "location": (0,0,0),"radius": 2.68,"depth": 16.0,"rotation": (0,0,0),"material": mlist[89],} )
+
+# hole_cubes
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_l01", "location": (-24,48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_l02", "location": (-24,16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_l03", "location": (-24,-16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_l04", "location": (-24,-48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_r01", "location": (24,48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_r02", "location": (24,16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_r03", "location": (24,-16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_r04", "location": (24,-48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_c01", "location": (0,48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_c02", "location": (0,16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_c03", "location": (0,-16,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+olist.append( {"OBJ": "CUBE", "name": "hole_cube_c04", "location": (0,-48,0), "size": (8,16,8), "rotation": (0,0,0), "material": mlist[67],} )
+
+
+# hole_raspi
+head_diameter_max = 2.9
+head_diameter_min = 2.3
+head_depth = 3.5
+margin = 0.0
+r1=(head_diameter_max+margin)/2 # 外径
+r2=(head_diameter_min+margin)/2 # 内径
+dp=0 # Headの高さ
+pnt_z = -1.6
+olist.append( {"OBJ": "CONE"    ,"name": "bolthole_raspi","location": (-24,8,pnt_z),"vertices": 32, "radius1": r2, "radius2": r1, "depth": dp,"rotation": (0,0,0),"material": mlist[12],
+        "edit":
+            [
+                [ "moveMesh", 30,( 0,0,  5)  ],
+                [ "moveMesh", 33,( 0,0,-15)  ],
+            ]
+        }
+    )
+
+
+#############################################
+# オブジェクト作成
+creObjFlow(olist)
+
+
+# ラズパイ設置の穴を開ける座標
+raspiPnts = [
+    [ -24.25 , 28.0 ],
+    [ 0.0 , 0.0 ],
+    [ 0.0 , 0.0 ],
+    [ 0.0 , 0.0 ],
+  ]
+
+raspiW   = 48.5 # ラズパイ設置の穴間の横幅
+raspiH   = 58.0 # ラズパイ設置の穴間の縦幅
+
+raspiPnts[1][0] = raspiPnts[0][0] +raspiW
+raspiPnts[1][1] = raspiPnts[0][1]
+
+raspiPnts[2][0] = raspiPnts[0][0]
+raspiPnts[2][1] = raspiPnts[0][1] -raspiH
+
+raspiPnts[3][0] = raspiPnts[0][0] +raspiW
+raspiPnts[3][1] = raspiPnts[0][1] -raspiH
+
+flg_mov = (1,1,0)
+
+for pnt in raspiPnts:
+    moveFnc3(obj["bolthole_raspi"],pnt,flg_mov)
+    booleanFnc(obj["BASE-Plate"],obj["bolthole_raspi"])
+deleteFnc( obj["bolthole_raspi"] )
+
+
+##############################################
+# Cube貫通穴
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_l01"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_l02"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_l03"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_l04"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_r01"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_r02"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_r03"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_r04"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_c01"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_c02"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_c03"])
+booleanFnc(obj["BASE-Plate"],obj["hole_cube_c04"])
+
+deleteFnc( obj["hole_cube_l01"] )
+deleteFnc( obj["hole_cube_l02"] )
+deleteFnc( obj["hole_cube_l03"] )
+deleteFnc( obj["hole_cube_l04"] )
+deleteFnc( obj["hole_cube_r01"] )
+deleteFnc( obj["hole_cube_r02"] )
+deleteFnc( obj["hole_cube_r03"] )
+deleteFnc( obj["hole_cube_r04"] )
+deleteFnc( obj["hole_cube_c01"] )
+deleteFnc( obj["hole_cube_c02"] )
+deleteFnc( obj["hole_cube_c03"] )
+deleteFnc( obj["hole_cube_c04"] )
+
+##############################################
+# レゴ貫通穴
+pnt_start_x = 32.0
+pnt_start_y = 60.0
+flg_mov = (1,1,0)
+pnt_cur_x = pnt_start_x
+pnt_cur_y = pnt_start_y
+range_x_min = pnt_start_x
+range_x_max = pnt_start_x*-1
+range_y_min = pnt_start_y
+range_y_max = pnt_start_y*-1
+
+pnt = (pnt_cur_x,pnt_cur_y,0)
+
+skip_list = [
+        [1,4],[1,11],
+        [7,4],[7,11]
+    ]
+skip_flg = 0
+
+for x in range(9):
+    pnt_cur_x = pnt_start_x -8*x
+    for y in range(16):
+        pnt_cur_y = pnt_start_y -8*y
+        pnt = (pnt_cur_x,pnt_cur_y,0)
+        for skip in skip_list:
+            if x == skip[0] and y == skip[1]:
+                skip_flg = 1
+        if skip_flg != 1:
+            moveFnc3(obj["LegoHole"],pnt,flg_mov)
+            booleanFnc(obj["BASE-Plate"] , obj["LegoHole"])
+        skip_flg = 0
+deleteFnc( obj["LegoHole"] )

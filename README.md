@@ -13,6 +13,11 @@
 
 使用方法は、スクリプトをコピーしBlenderのPythonスクリプト欄に貼り付けます。
 
-- 01_fixing-base-for-camera-device.txt
-  - カメラモジュールの固定台を作りました。
+### 01_fixing-base-for-camera-device.txt
+
+カメラモジュールの固定台を作りました。
+
+### 02_raspberry-pi-fixing-plate.txt
+
+Raspberry Pi を固定する板です。
 
