@@ -35,4 +35,7 @@ Raspberry Pi を固定する板です。
 
 [![](https://img.youtube.com/vi/N5YkuJW_tWA/0.jpg)](https://www.youtube.com/watch?v=N5YkuJW_tWA)
 
+### 05_Obniz-fixed-block.txt
+
+[![](https://img.youtube.com/vi/69W80aoWBDo/0.jpg)](https://www.youtube.com/watch?v=69W80aoWBDo)
 
