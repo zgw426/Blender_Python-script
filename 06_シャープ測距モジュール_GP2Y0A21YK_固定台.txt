@@ -267,8 +267,8 @@ def editFlow(args):
 ##-------------------------------##
 
 # シャープ測距モジュール GP2Y0A21YKにある左右の穴
-olist.append( {"OBJ": "CYLINDER","name": "HOLE01", "location": (18.1, 0, 0),"radius": 1.6,"depth": 6.0,"rotation": (1.5708,0,0),"material": mlist[89],} )
-olist.append( {"OBJ": "CYLINDER","name": "HOLE02", "location": (-18.1, 0, 0),"radius": 1.6,"depth": 6.0,"rotation": (1.5708,0,0),"material": mlist[90],} )
+olist.append( {"OBJ": "CYLINDER","name": "HOLE01", "location": (18.1, 0, 2.2),"radius": 1.6,"depth": 6.0,"rotation": (1.5708,0,0),"material": mlist[89],} )
+olist.append( {"OBJ": "CYLINDER","name": "HOLE02", "location": (-18.1, 0, 2.2),"radius": 1.6,"depth": 6.0,"rotation": (1.5708,0,0),"material": mlist[90],} )
 
 # シャープ測距モジュール GP2Y0A21YKを固定する左右の柱
 olist.append( {"OBJ": "CUBE", "name": "SIDE01", "location": ( 18.5, 0, -2.5),   "size": (8, 4, 17.9), "rotation": (0,0,0), "material": mlist[12],} )
@@ -278,14 +278,19 @@ olist.append( {"OBJ": "CUBE", "name": "SIDE02", "location": (-18.5, 0, -2.5),   
 alist.append({"function": "booleanFnc", "args": ["SIDE01","HOLE01"]})
 alist.append({"function": "booleanFnc", "args": ["SIDE02","HOLE02"]})
 
+
+alist.append({"function": "moveFnc2", "args": ["SIDE01", 18.5, 0, -1.2]})
+alist.append({"function": "moveFnc2", "args": ["SIDE02",-18.5, 0, -1.2]})
+
+
 # レゴと互換性のある穴
 olist.append( {"OBJ": "CYLINDER","name": "LEGOHOLE", "location": (0,0,0),"radius": 2.60,"depth": 90.0,"rotation": (0,0,0),"material": mlist[89],} )
 
 # サーボモータに乗せる台座部分
-olist.append( {"OBJ": "CUBE", "name": "Fixed-Block-01", "location": (0, 0, -12), "size": (45, 30, 4), "rotation": (0,0,0), "material": mlist[20],} )
+olist.append( {"OBJ": "CUBE", "name": "Fixed-Block-01", "location": (0, 0, -13), "size": (45, 30, 6), "rotation": (0,0,0), "material": mlist[20],} )
 
 # サーボモータに乗せる台座部分にサーボモータがハマるように底面に溝を作る
-olist.append( {"OBJ": "CUBE", "name": "HC-SR04-Bottom-01", "location": (0, 0, -15), "size": (25, 46, 6), "rotation": (0,0,0), "material": mlist[21],} )
+olist.append( {"OBJ": "CUBE", "name": "HC-SR04-Bottom-01", "location": (0, 0, -15), "size": (24.2, 46, 6), "rotation": (0,0,0), "material": mlist[21],} )
 alist.append({"function": "booleanFnc", "args": ["Fixed-Block-01","HC-SR04-Bottom-01"]})
 
 # サーボモータに乗せる台座部分にレゴ互換の穴をあける
