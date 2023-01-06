@@ -41,3 +41,8 @@ obniz Board 1Y を固定するブロック
 
 [![](https://img.youtube.com/vi/69W80aoWBDo/0.jpg)](https://www.youtube.com/watch?v=69W80aoWBDo)
 
+### 06_シャープ測距モジュール_GP2Y0A21YK_固定台
+
+[![](https://img.youtube.com/vi/OLfkQzVu7Ro/0.jpg)](https://www.youtube.com/watch?v=OLfkQzVu7Ro)
+
+
