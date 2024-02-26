@@ -46,3 +46,9 @@ obniz Board 1Y を固定するブロック
 [![](https://img.youtube.com/vi/OLfkQzVu7Ro/0.jpg)](https://www.youtube.com/watch?v=OLfkQzVu7Ro)
 
 
+### 07_MDFボードの留め具
+
+- できるだけ簡単に箱を作る留め具を3Dプリンターで作りたい
+- MDF材(100mm x 100mm x 6mm)と3DCGで作った留め具で箱を作りたい
+- MDF材にはできるだけ加工しなように工夫した。
+- MDF材には電動ドリルで直径5mmの穴を各板に4つ空けるだけ。
