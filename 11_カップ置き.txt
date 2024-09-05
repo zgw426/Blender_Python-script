@@ -4,8 +4,7 @@
 ## フタ付き
 ## MDF材(100mm x 100mm x 6mm)と3DCGで作った留め具で箱を作りたい
 ## MDF材にはできるだけ加工しなように工夫した。
-## 
-## 留め串の軸にはつまようじを使用する
+## フタ用のMDF材にボルトを4つ埋めるだけ
 ## 
 ##---------------------------------------##
 
@@ -286,13 +285,11 @@ def editFlow(args):
 #
 #-----------------------#
 
-base_x = 6.0  # MDF材の厚み(mm)
-base_y = 2.0  # 保護する厚み(mm)
-base_w = 10.0  # 留め具の幅(mm)
-tome_w = 100.6  # 留め具の保護の幅(mm)
-#hole_r = 1.7  # 穴の半径(mm)
-hole_r = 1.4  # 穴の半径(mm)
-
+base_x = 6  # MDF材の厚み(mm)
+base_y = 2  # 保護する厚み(mm)
+base_w = 10  # 留め具の幅(mm)
+tome_w = 101  # 留め具の保護の幅(mm)
+hole_r = 1.7  # 穴の半径(mm)
 
 #--------#
 
@@ -301,7 +298,7 @@ btm01_y = 0
 btm01_z = 0
 btm01_w = (base_x+base_y)/2
 btm01_h = base_x+base_y
-btm01_d = base_w/2
+btm01_d = base_w
 
 olist.append( {"OBJ": "CUBE", "name": "BOTTOM-01", "location": (btm01_x, btm01_y, btm01_z),   "size": (btm01_w, btm01_d, btm01_h), "rotation": (0,0,0), "material": mlist[12],} )
 
@@ -326,7 +323,7 @@ cylinder01_x = 0
 cylinder01_y = 0
 cylinder01_z = 0
 cylinder01_radius = (base_x+base_y)/2
-cylinder01_depth = base_w/2
+cylinder01_depth = base_w
 
 olist.append( {"OBJ": "CYLINDER","name": "CYLINDER-01", "location": (cylinder01_x, cylinder01_y, cylinder01_z),"radius": cylinder01_radius,"depth": cylinder01_depth, "rotation": (1.5708,0,0),"material": mlist[89],} )
 
@@ -383,79 +380,44 @@ alist.append({"function": "deleteFnc", "args": ["HOLE-02"]})
 
 
 #----#
+tmp_x = btm01_x - btm02_x
+alist.append({"function": "moveFnc2", "args": ["BOTTOM-01", tmp_x, 0, 0]})
+tmp_x = -btm02_x
+alist.append({"function": "moveFnc2", "args": ["CYLINDER-01", tmp_x, 0, 0]})
 
-val_a = btm01_x - btm02_x
-val_b = btm02_x
-val_c = base_w / 4
-
-
-#tmp_x = btm01_x - btm02_x
-#tmp_y = base_w / 4
-tmp_x = val_a
-tmp_y = val_c
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-01", tmp_x, tmp_y, 0]})
-
-
-#tmp_x = -btm02_x
-#tmp_y = base_w / 4
-tmp_x = -val_b
-tmp_y = val_c
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-01", tmp_x, tmp_y, 0]})
-
-
-#tmp_x = -btm01_x + btm02_x
-#tmp_y = -base_w / 4
-
-tmp_x = -val_a
-tmp_y = -val_c
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-03", tmp_x, tmp_y, 0]})
-
-
-#tmp_x = btm02_x
-#tmp_y = -base_w / 4
-tmp_x =  val_b
-tmp_y = -val_c
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-02", tmp_x, tmp_y, 0]})
-
+tmp_x = -btm01_x + btm02_x
+alist.append({"function": "moveFnc2", "args": ["BOTTOM-03", tmp_x, 0, 0]})
+tmp_x = btm02_x
+alist.append({"function": "moveFnc2", "args": ["CYLINDER-02", tmp_x, 0, 0]})
 
 alist.append({"function": "moveFnc2", "args": ["BOTTOM-02", 0, 0, -(base_x+base_y)/2 + base_y/2]})
 #----#
 
 #----#
-tmp_x = -base_w / 4
+tmp_x = -btm01_x + btm02_x
 tmp_y =  btm01_x - btm02_x
-
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "BOTTOM-01-C"  ,0, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "BOTTOM-01-C"  ,tmp_x, tmp_y, 0]})
 alist.append({"function": "rotateFnc", "args": ["BOTTOM-01-C",0,0,90]})
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-01-C", tmp_x, tmp_y, 0]})
 
-tmp_x = -base_w / 4
-tmp_y = -btm02_x
-
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01",   "CYLINDER-01-C"  ,0, 0, 0]})
+tmp_x =   btm02_x
+tmp_y =  -btm02_x
+alist.append({"function": "copyFnc", "args": ["CYLINDER-01",   "CYLINDER-01-C"  ,tmp_x, tmp_y, 0]})
 alist.append({"function": "rotateFnc", "args": ["CYLINDER-01-C",0,90,0]})
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-01-C", tmp_x, tmp_y, 0]})
 
-#tmp_y = -btm01_x + btm02_x
-#tmp_x =  btm01_x - btm02_x
 
-tmp_x = base_w / 4
-tmp_y = tome_w /2 + (base_x+base_y)/4
-
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03", "BOTTOM-03-C" ,0, 0, 0]})
+tmp_x =  btm01_x - btm02_x
+tmp_y = -btm01_x + btm02_x
+alist.append({"function": "copyFnc", "args": ["BOTTOM-03",   "BOTTOM-03-C"  ,tmp_x, tmp_y, 0]})
 alist.append({"function": "rotateFnc", "args": ["BOTTOM-03-C",0,0,90]})
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-03-C", tmp_x, tmp_y, 0]})
 
 
-#tmp_x = -btm02_x
-#tmp_y =  btm02_x
-
-tmp_x = base_w / 4
-tmp_y = tome_w /2 + (base_x+base_y)/2
-
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02",   "CYLINDER-02-C" ,0, 0, 0]})
+tmp_x = -btm02_x
+tmp_y =  btm02_x
+alist.append({"function": "copyFnc", "args": ["CYLINDER-02",   "CYLINDER-02-C"  ,tmp_x, tmp_y, 0]})
 alist.append({"function": "rotateFnc", "args": ["CYLINDER-02-C",0,90,0]})
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-02-C", tmp_x, tmp_y, 0]})
+
+
+
 
 tmp_x = btm01_x - btm02_x
 alist.append({"function": "copyFnc", "args": ["BOTTOM-02",   "BOTTOM-02-C"  ,0, 0, 0]})
@@ -470,110 +432,8 @@ alist.append({"function": "rotateFnc", "args": ["BOTTOM-02",0,0,90]})
 
 
 
-##-----##
-
-tmp_x = tome_w/4
-alist.append({"function": "copyFnc", "args": ["BOTTOM-02",     "A-BOTTOM-02" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01-C",   "A-BOTTOM-01" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03-C",   "A-BOTTOM-03" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01-C",  "A-CYLINDER-01" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02-C",  "A-CYLINDER-02" ,tmp_x, 0, 0]})
 
 
-
-tmp_x = -tome_w/4
-alist.append({"function": "copyFnc", "args": ["BOTTOM-02",     "B-BOTTOM-02" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01-C",   "B-BOTTOM-01" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03-C",   "B-BOTTOM-03" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01-C", "B-CYLINDER-01" ,tmp_x, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02-C", "B-CYLINDER-02" ,tmp_x, 0, 0]})
-
-
-
-tmp_y = tome_w/4
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "C-BOTTOM-01"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-02-C", "C-BOTTOM-02"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03",   "C-BOTTOM-03"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01", "C-CYLINDER-01" ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02", "C-CYLINDER-02" ,0, tmp_y, 0]})
-
-
-tmp_y = -tome_w/4
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "C-BOTTOM-01"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-02-C", "C-BOTTOM-02"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03",   "C-BOTTOM-03"   ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01", "C-CYLINDER-01" ,0, tmp_y, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02", "C-CYLINDER-02" ,0, tmp_y, 0]})
-
-
-
-
-
-##-----##
-
-"""
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01", "TOME-01" ,100, 0, 0]})
-
-cylinder01_x = 0 
-cylinder01_y = 60
-cylinder01_z = 0
-cylinder01_radius = (base_x+base_y)/2
-cylinder01_depth = base_w/4
-
-olist.append( {"OBJ": "CYLINDER","name": "TOME-02", "location": (cylinder01_x, cylinder01_y, cylinder01_z),"radius": cylinder01_radius,"depth": cylinder01_depth, "rotation": (1.5708,0,0),"material": mlist[22],} )
-alist.append({"function": "bevelFnc", "args": ["TOME-02", 15, 0.6]})
-alist.append({"function": "moveFnc2", "args": ["TOME-02", 0, 70, -1]})
-alist.append({"function": "rotateFnc", "args": ["TOME-02",0,0,90]})
-
-alist.append({"function": "moveFnc2", "args": ["TOME-01", 0, 70, 1.5]})
-alist.append({"function": "rotateFnc", "args": ["TOME-01",0,0,90]})
-"""
-
-
-
-
-
-
-
-cylinder01_x = 0 
-cylinder01_y = 100
-cylinder01_z = 3.7
-cylinder01_radius = (base_x+base_y)/2 - 0.5
-cylinder01_depth = 2*base_w/3
-
-olist.append( {"OBJ": "CYLINDER","name": "TOMEGU-A", "location": (cylinder01_x, cylinder01_y, cylinder01_z),"radius": cylinder01_radius,"depth": cylinder01_depth, "rotation": (1.5708,0,0),"material": mlist[1],} )
-alist.append({"function": "rotateFnc", "args": ["TOMEGU-A",0,0,90]})
-
-
-
-
-
-
-cylinder01_x = 0 
-cylinder01_y = 100
-cylinder01_z = 0
-cylinder01_radius = (base_x+base_y)/2 - 0.5
-cylinder01_depth = 2*base_w/4
-
-olist.append( {"OBJ": "CYLINDER","name": "TOMEGU-B", "location": (cylinder01_x, cylinder01_y, cylinder01_z),"radius": cylinder01_radius,"depth": cylinder01_depth, "rotation": (1.5708,0,0),"material": mlist[2],} )
-alist.append({"function": "rotateFnc", "args": ["TOMEGU-B",0,0,90]})
-alist.append({"function": "bevelFnc", "args": ["TOMEGU-B", 15, 0.6]})
-
-
-cone_x = 0 
-cone_y = 100
-cone_z = 4
-cone_radius1 = 1.3
-cone_radius2 = 1.4
-cone_depth = base_w
-
-olist.append( {"OBJ": "CONE","name": "TOME-HOLE","location": (cone_x, cone_y, cone_z),"vertices": 32, "radius1": cone_radius1, "radius2": cone_radius2, "depth": cone_depth,"rotation": (0,0,0),"material": mlist[3],} )
-
-alist.append({"function": "booleanFnc", "args": ["TOMEGU-A","TOME-HOLE"]})
-alist.append({"function": "booleanFnc", "args": ["TOMEGU-B","TOME-HOLE"]})
-
-# 不要になったオブジェクトを削除
-alist.append({"function": "deleteFnc", "args": ["TOME-HOLE"]})
 
 
 

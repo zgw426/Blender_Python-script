@@ -52,3 +52,13 @@ obniz Board 1Y を固定するブロック
 - MDF材(100mm x 100mm x 6mm)と3DCGで作った留め具で箱を作りたい
 - MDF材にはできるだけ加工しなように工夫した。
 - MDF材には電動ドリルで直径5mmの穴を各板に4つ空けるだけ。
+
+
+### 11_カップ置き.txt
+
+- カップ置き
+
+<img src="./parts/11_cupholder.png" width="300">
+
+
+
