@@ -172,6 +172,54 @@ def moveMesh(objName, faceNo,pnt):
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
 
+
+
+
+def scaleFace(objName, faceNo, scale_factor):
+    """選択した面を拡大する"""
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.context.view_layer.objects.active = bpy.data.objects[objName]
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    # 全てのメッシュを非選択状態にする.
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # 面モードに設定.
+    bpy.ops.mesh.select_mode(type="FACE")
+    cube_bmesh = bmesh.from_edit_mesh(bpy.context.object.data)
+    cube_bmesh.faces.ensure_lookup_table()
+    cube_bmesh.faces[faceNo].select = True
+
+    # 面を拡大する.
+    bpy.ops.transform.resize(value=scale_factor)
+
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+
+def addJoint(argObjects):
+    """JOIN 複数オブジェクトをグループ化する"""
+    
+    object_names = ["A-CONE01", "A-CONE02"]
+    #object_names = argObjects
+
+    # オブジェクトを選択
+    for obj_name in object_names:
+        bpy.data.objects[obj_name].select_set(True)
+
+    # アクティブオブジェクトを設定（結合後の名前になります）
+    bpy.context.view_layer.objects.active = bpy.data.objects[object_names[0]]
+
+    # オブジェクトを結合
+    bpy.ops.object.join()
+
+    #print("オブジェクトが結合されました。")
+
+
+
+
+
+
+
 def movePoint(objName, pointNo, pnt):
     '''頂点モードにし, 一つの頂点を動かす'''
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -270,173 +318,40 @@ def editFlow(args):
                 widthVal = curObj["args"][2]
                 bevelFnc(objName, segmentsVal, widthVal)
             case "moveMesh":
-                """面の押し出し"""
+                """選択した面の押し出し"""
                 objName = curObj["args"][0]
                 faceNo = curObj["args"][1]
                 pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
                 moveMesh(objName, faceNo,pnt)
 
+            case "scaleMesh":
+                """選択した面の拡大"""
+                objName = curObj["args"][0]
+                faceNo = curObj["args"][1]
+                pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
+                scaleFace(objName, faceNo,pnt)
+
+            case "addJoin":
+                """JOIN 複数オブジェクトをグループ化する大"""
+                addJoint(args)
+
 
 ##-------------------------------##
 
-#-----------------------#
-#
-# MDF材(100mmx100mmx6mm)で箱を作る留め具
-#
-#-----------------------#
 
-base_x = 6  # MDF材の厚み(mm)
-base_y = 2  # 保護する厚み(mm)
-base_w = 10  # 留め具の幅(mm)
-tome_w = 101  # 留め具の保護の幅(mm)
-hole_r = 1.7  # 穴の半径(mm)
 
-#--------#
+olist.append( {"OBJ": "CONE","name": "CONE01","location": (0,0,0),"vertices": 40, "radius1": 46, "radius2": 42, "depth": 10,"rotation": (0,0,0),"material": mlist[2],} )
+olist.append( {"OBJ": "CONE","name": "CONE02","location": (0,0,0),"vertices": 40, "radius1": 32, "radius2": 38, "depth": 12,"rotation": (0,0,0),"material": mlist[12],} )
 
-btm01_x = (base_x+base_y)/4
-btm01_y = 0
-btm01_z = 0
-btm01_w = (base_x+base_y)/2
-btm01_h = base_x+base_y
-btm01_d = base_w
+alist.append({"function": "booleanFnc", "args": ["CONE01","CONE02"]})
+alist.append({"function": "deleteFnc", "args": ["CONE02"]})
 
-olist.append( {"OBJ": "CUBE", "name": "BOTTOM-01", "location": (btm01_x, btm01_y, btm01_z),   "size": (btm01_w, btm01_d, btm01_h), "rotation": (0,0,0), "material": mlist[12],} )
 
 
 
-btm02_x = (base_x+base_y)/2 + tome_w/2
-btm02_y = 0
-btm02_z = -(base_x+base_y)/2 + base_y/2
-btm02_w = tome_w
-btm02_h = base_y
-btm02_d = base_w
-
-olist.append( {"OBJ": "CUBE", "name": "BOTTOM-02", "location": (btm02_x, btm02_y, btm02_z),   "size": (btm02_w, btm02_d, btm02_h), "rotation": (0,0,0), "material": mlist[13],} )
-
-
-
-
-
-
-
-cylinder01_x = 0 
-cylinder01_y = 0
-cylinder01_z = 0
-cylinder01_radius = (base_x+base_y)/2
-cylinder01_depth = base_w
-
-olist.append( {"OBJ": "CYLINDER","name": "CYLINDER-01", "location": (cylinder01_x, cylinder01_y, cylinder01_z),"radius": cylinder01_radius,"depth": cylinder01_depth, "rotation": (1.5708,0,0),"material": mlist[89],} )
-
-
-
-
-
-hole01_x = 0 
-hole01_y = 0
-hole01_z = 0
-hole01_radius = hole_r
-hole01_depth = base_w *1.2
-
-olist.append( {"OBJ": "CYLINDER","name": "HOLE-01", "location": (hole01_x, hole01_y, hole01_z),"radius": hole01_radius,"depth": hole01_depth, "rotation": (1.5708,0,0),"material": mlist[1],} )
-
-
-
-
-
-
-
-
-
-
-
-
-
-##alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "BOTTOM-01-B"  ,0,  20, 0]})
-##alist.append({"function": "copyFnc", "args": ["BOTTOM-02",   "BOTTOM-02-B"  ,0,  20, 0]})
-##alist.append({"function": "copyFnc", "args": ["CYLINDER-01", "CYLINDER-02-B",0,  20, 0]})
-
-
-
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "BOTTOM-03"  ,tome_w + (base_x+base_y)/2,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01", "CYLINDER-02"  ,tome_w + (base_x+base_y),  0, 0]})
-alist.append({"function": "copyFnc", "args": ["HOLE-01",     "HOLE-02"  ,tome_w + (base_x+base_y),  0, 0]})
-
-
-
-##alist.append({"function": "copyFnc", "args": ["BOTTOM-03",   "BOTTOM-03-B"  ,0,  20, 0]})
-##alist.append({"function": "copyFnc", "args": ["CYLINDER-02", "CYLINDER-02-B",0,  20, 0]})
-
-
-alist.append({"function": "booleanFnc", "args": ["CYLINDER-01","HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["BOTTOM-01","HOLE-01"]})
-
-alist.append({"function": "booleanFnc", "args": ["CYLINDER-02","HOLE-02"]})
-alist.append({"function": "booleanFnc", "args": ["BOTTOM-03","HOLE-02"]})
-
-# 不要になったオブジェクトを削除
-alist.append({"function": "deleteFnc", "args": ["HOLE-01"]})
-alist.append({"function": "deleteFnc", "args": ["HOLE-02"]})
-
-
-
-#----#
-tmp_x = btm01_x - btm02_x
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-01", tmp_x, 0, 0]})
-tmp_x = -btm02_x
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-01", tmp_x, 0, 0]})
-
-tmp_x = -btm01_x + btm02_x
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-03", tmp_x, 0, 0]})
-tmp_x = btm02_x
-alist.append({"function": "moveFnc2", "args": ["CYLINDER-02", tmp_x, 0, 0]})
-
-alist.append({"function": "moveFnc2", "args": ["BOTTOM-02", 0, 0, -(base_x+base_y)/2 + base_y/2]})
-#----#
-
-#----#
-tmp_x = -btm01_x + btm02_x
-tmp_y =  btm01_x - btm02_x
-alist.append({"function": "copyFnc", "args": ["BOTTOM-01",   "BOTTOM-01-C"  ,tmp_x, tmp_y, 0]})
-alist.append({"function": "rotateFnc", "args": ["BOTTOM-01-C",0,0,90]})
-
-tmp_x =   btm02_x
-tmp_y =  -btm02_x
-alist.append({"function": "copyFnc", "args": ["CYLINDER-01",   "CYLINDER-01-C"  ,tmp_x, tmp_y, 0]})
-alist.append({"function": "rotateFnc", "args": ["CYLINDER-01-C",0,90,0]})
-
-
-tmp_x =  btm01_x - btm02_x
-tmp_y = -btm01_x + btm02_x
-alist.append({"function": "copyFnc", "args": ["BOTTOM-03",   "BOTTOM-03-C"  ,tmp_x, tmp_y, 0]})
-alist.append({"function": "rotateFnc", "args": ["BOTTOM-03-C",0,0,90]})
-
-
-tmp_x = -btm02_x
-tmp_y =  btm02_x
-alist.append({"function": "copyFnc", "args": ["CYLINDER-02",   "CYLINDER-02-C"  ,tmp_x, tmp_y, 0]})
-alist.append({"function": "rotateFnc", "args": ["CYLINDER-02-C",0,90,0]})
-
-
-
-
-tmp_x = btm01_x - btm02_x
-alist.append({"function": "copyFnc", "args": ["BOTTOM-02",   "BOTTOM-02-C"  ,0, 0, 0]})
-alist.append({"function": "rotateFnc", "args": ["BOTTOM-02",0,0,90]})
-
-
-#----#
-
-
-
-
-
-
-
-
-
-
-
-
+#olist.append( {"OBJ": "CONE","name": "A-CONE01","location": (0,0,0),"vertices": 20, "radius1": 23, "radius2": 21, "depth": 10,"rotation": (0,0,0),"material": mlist[22],} )
+#olist.append( {"OBJ": "CONE","name": "A-CONE02","location": (0,0,0),"vertices": 30, "radius1": 16, "radius2": 19, "depth": 12,"rotation": (0,0,0),"material": mlist[21],} )
+#alist.append({"function": "addJoin", "args": ["A-CONE01","A-CONE02"]})
 
 
 #############################################
