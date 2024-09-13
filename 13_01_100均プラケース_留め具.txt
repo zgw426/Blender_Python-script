@@ -1,8 +1,8 @@
 ##---------------------------------------##
 ##
-## MDF材(100mm x 100mm x 6mm)で作った箱にはいる
-## 中の箱を作る
-## 箱の位置を固定するガイド付き
+## ダイソープラケースにフィットするものを作る
+## (内寸 約165mm X 105mm)
+## 留め具 編
 ## 
 ##---------------------------------------##
 
@@ -195,7 +195,23 @@ def scaleFace(objName, faceNo, scale_factor):
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
 
+def addJoint(argObjects):
+    """JOIN 複数オブジェクトをグループ化する"""
+    
+    object_names = ["A-CONE01", "A-CONE02"]
+    #object_names = argObjects
 
+    # オブジェクトを選択
+    for obj_name in object_names:
+        bpy.data.objects[obj_name].select_set(True)
+
+    # アクティブオブジェクトを設定（結合後の名前になります）
+    bpy.context.view_layer.objects.active = bpy.data.objects[object_names[0]]
+
+    # オブジェクトを結合
+    bpy.ops.object.join()
+
+    #print("オブジェクトが結合されました。")
 
 
 
@@ -314,272 +330,160 @@ def editFlow(args):
                 pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
                 scaleFace(objName, faceNo,pnt)
 
+            case "addJoin":
+                """JOIN 複数オブジェクトをグループ化する大"""
+                addJoint(args)
+
+
 ##-------------------------------##
 
-#-----------------------#
-#
-# MDF材(100mmx100mmx6mm)で箱を作る留め具
-#
-#-----------------------#
-
-base_thickness_1 = 3.0  # 厚み(mm)
-base_thickness_2 = 5.0  # 厚み(mm)
-
-mdf_vertical   = 99.8  # MDFの幅(mm)
-mdf_horizontal = 99.8  # MDFの幅(mm)
-mdf_depth      = 99.8
-
-base_vertical = mdf_vertical
-base_horizontal = mdf_horizontal
-base_depth = 12
 
 
-box_vertical = base_vertical/2
-box_horizontal = base_horizontal/2
-box_depth = mdf_depth - base_depth
-box_btm_rate = 0.6
-
-#--------#
-
-locate_x = 0
-locate_y = 0
-locate_z = 0
-size_x = box_vertical
-size_y = box_horizontal
-size_z_btm = base_depth
-size_z_top = box_depth
-
-
-olist.append( {"OBJ": "CUBE", "name": "A-BOTTOM-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[30],} )
-alist.append({"function": "scaleMesh", "args": ["A-BOTTOM-01", 4, box_btm_rate,box_btm_rate,1]})
-alist.append({"function": "moveMesh", "args": ["A-BOTTOM-01", 5, 0,0,size_z_top]})
-
-
+# --- ↓↓ レール ↓↓ --- #
 #"""
-locate_x = 0
-locate_y = 0
-locate_z = base_thickness_1
-size_x = box_vertical - base_thickness_1
-size_y = box_horizontal - base_thickness_1
-size_z_btm = base_depth
-size_z_top = box_depth
+olist.append( {"OBJ": "CUBE", "name": "Rail-B-01-Base", "location": (50,0,1), "size": (46, 20, 2), "rotation": (0,0,0), "material": mlist[20],} )
+olist.append( {"OBJ": "CUBE", "name": "Rail-B-02-Rail", "location": (50,0,3), "size": (46, 10, 2), "rotation": (0,0,0), "material": mlist[21],} )
+olist.append( {"OBJ": "CUBE", "name": "Rail-B-03-Rail", "location": (50,0,5), "size": (46, 14, 2), "rotation": (0,0,0), "material": mlist[22],} )
+
+# 拡大する
+expansionFnc("Rail-B-01-Base", 0.5)
+expansionFnc("Rail-B-02-Rail", 0.5)
+expansionFnc("Rail-B-03-Rail", 0.5)
+
+olist.append( {"OBJ": "CUBE", "name": "Rail-M-01-Base", "location": (50,0,5), "size": (30, 20, 10), "rotation": (0,0,0), "material": mlist[20],} )
+olist.append( {"OBJ": "CUBE", "name": "Rail-B-04-Magnet", "location": (42.5,0,7.1), "size": (10, 10, 1.4), "rotation": (0,0,0), "material": mlist[21],} )
+
+# ブーリアン
+alist.append({"function": "booleanFnc", "args": ["Rail-M-01-Base","Rail-B-01-Base"]})
+alist.append({"function": "booleanFnc", "args": ["Rail-M-01-Base","Rail-B-02-Rail"]})
+alist.append({"function": "booleanFnc", "args": ["Rail-M-01-Base","Rail-B-03-Rail"]})
+alist.append({"function": "booleanFnc", "args": ["Rail-M-01-Base","Rail-B-04-Magnet"]})
+
+alist.append({"function": "moveFnc2", "args": ["Rail-B-04-Magnet",57.5,0,7.1]})
+alist.append({"function": "booleanFnc", "args": ["Rail-M-01-Base","Rail-B-04-Magnet"]})
+
+# 削除
+alist.append({"function": "deleteFnc", "args": ["Rail-B-01-Base"]})
+alist.append({"function": "deleteFnc", "args": ["Rail-B-02-Rail"]})
+alist.append({"function": "deleteFnc", "args": ["Rail-B-03-Rail"]})
+#alist.append({"function": "deleteFnc", "args": ["Rail-B-04-Magnet"]})
 #"""
 
 
-olist.append( {"OBJ": "CUBE", "name": "A-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[31],} )
-alist.append({"function": "scaleMesh", "args": ["A-HOLE-01", 4, box_btm_rate,box_btm_rate,1]})
-alist.append({"function": "moveMesh", "args": ["A-HOLE-01", 5, 0,0,size_z_top]})
-alist.append({"function": "booleanFnc", "args": ["A-BOTTOM-01","A-HOLE-01"]})
-alist.append({"function": "deleteFnc", "args": ["A-HOLE-01"]})
+# 留め具
+#"""
+olist.append( {"OBJ": "CUBE", "name": "FUTA-M-01", "location": (-39.8, 0, -1.5), "size": (19.7, 34, 3), "rotation": (0,0,0), "material": mlist[60],} )
+olist.append( {"OBJ": "CUBE", "name": "FUTA-M-02", "location": (-45.3, 0, 1), "size": (9, 34, 2), "rotation": (0,0,0), "material": mlist[61],} )
+olist.append( {"OBJ": "CUBE", "name": "CHOBAN-B-04", "location": (-33.8 , 0, -1.8), "size": (8, 24, 0.6), "rotation": (0,0,0), "material": mlist[51],} )
+olist.append( {"OBJ": "CYLINDER","name": "CHOBAN-B-05", "location": (-33.2, 7.4, -0.5),"radius": 1.3,"depth": 8.0,"rotation": (0,0,0),"material": mlist[89],} )
+olist.append( {"OBJ": "CYLINDER","name": "CHOBAN-B-06", "location": (-33.2,-7.4, -0.5),"radius": 1.3,"depth": 8.0,"rotation": (0,0,0),"material": mlist[89],} )
 
-## 取っ手
-locate_x = -(mdf_vertical)/4 - -base_thickness_1
-locate_y = 0
-locate_z = 89.5
-size_x = base_thickness_1
-size_y = base_vertical *0.5 * 0.7
-size_z_btm = 8
+olist.append( {"OBJ": "CUBE", "name": "FUTA-B-01", "location": (-46 , 0, 0), "size": (8, 45, 8), "rotation": (0,0,0), "material": mlist[51],} )
 
-olist.append( {"OBJ": "CUBE", "name": "A-TOTE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[39],} )
-alist.append({"function": "scaleMesh", "args": ["A-TOTE-01", 2, 0.5,1,0.5]})
 
+olist.append( {"OBJ": "CUBE", "name": "KADO-B-01", "location": (-27 , 0, 1), "size": (8, 36, 8), "rotation": (0,0,0), "material": mlist[57],} )
+alist.append({"function": "rotateFnc", "args": ["KADO-B-01",0,60,0]})
 
+# ブーリアン
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-01","KADO-B-01"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-01","CHOBAN-B-04"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-01","CHOBAN-B-05"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-01","CHOBAN-B-06"]})
 
+# 複製
+alist.append({"function": "copyFnc", "args": ["FUTA-M-01", "FUTA-M-11",-50,  0, 0]})
+alist.append({"function": "copyFnc", "args": ["FUTA-M-02", "FUTA-M-12",-50,  0, 0]})
 
-##--- 2x1 ---##
 
-alist.append({"function": "copyFnc", "args": ["A-BOTTOM-01", "B-BOTTOM-01",-100,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["B-BOTTOM-01", "B-BOTTOM-02", 0, 49.9, 0]})
 
 
-locate_x = -100
-locate_y = 24.9
-locate_z = 7.5
-size_x = box_vertical - 2
-size_y = 3 -0.2
-size_z_btm = 3
-#size_z_top = 3
-olist.append( {"OBJ": "CUBE", "name": "B-HOJO-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[12],} )
+# ブーリアン
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-01","FUTA-B-01"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-02","FUTA-B-01"]})
 
 
-locate_x = -100
-locate_y = 24.9
-locate_z = 59
-size_x = box_vertical -3
-size_y = 8
-size_z_btm = 100
-olist.append( {"OBJ": "CUBE", "name": "B-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[13],} )
+# 削除
+alist.append({"function": "deleteFnc", "args": ["KADO-B-01"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-04"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-05"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-06"]})
 
-alist.append({"function": "booleanFnc", "args": ["B-BOTTOM-01","B-HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["B-BOTTOM-02","B-HOLE-01"]})
-alist.append({"function": "deleteFnc", "args": ["B-HOLE-01"]})
+alist.append({"function": "deleteFnc", "args": ["FUTA-B-01"]})
+#"""
 
+# 留め具のレール
+olist.append( {"OBJ": "CUBE", "name": "Side-M-01-Base", "location": (-49.5,0,-2), "size": (15, 34, 2), "rotation": (0,0,0), "material": mlist[10],} )
+olist.append( {"OBJ": "CUBE", "name": "Side-M-02-Rail", "location": (-49.5,0, 0), "size": (15, 10, 2), "rotation": (0,0,0), "material": mlist[11],} )
+olist.append( {"OBJ": "CUBE", "name": "Side-M-03-Rail", "location": (-49.5,0, 2), "size": (15, 14, 2), "rotation": (0,0,0), "material": mlist[12],} )
 
-alist.append({"function": "copyFnc", "args": ["A-TOTE-01", "B-TOTE-01",-100,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["B-TOTE-01", "B-TOTE-02",   0, 50, 0]})
+# 磁石穴
+olist.append( {"OBJ": "CYLINDER","name": "Side-B-Magnet", "location": (-49.5, 0, 1.6),"radius": 3.2,"depth": 3.0,"rotation": (0,0,0),"material": mlist[89],} )
 
+# ブーリアン
+alist.append({"function": "booleanFnc", "args": ["Side-M-02-Rail","Side-B-Magnet"]})
+alist.append({"function": "booleanFnc", "args": ["Side-M-03-Rail","Side-B-Magnet"]})
 
+# 削除
+alist.append({"function": "deleteFnc", "args": ["Side-B-Magnet"]})
 
-##--- 2x2 ---##
-alist.append({"function": "copyFnc", "args": ["A-BOTTOM-01", "C-BOTTOM-01",-200,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["C-BOTTOM-01", "C-BOTTOM-02", 0, 49.9, 0]})
-alist.append({"function": "copyFnc", "args": ["C-BOTTOM-01", "C-BOTTOM-03", -49.9, 0, 0]})
-alist.append({"function": "copyFnc", "args": ["C-BOTTOM-01", "C-BOTTOM-04", -49.9, 49.9, 0]})
 
-locate_x = -200 - mdf_vertical/4
-locate_y = 24.9
-locate_z = 59
-size_x = mdf_vertical - base_thickness_1
-size_y = mdf_vertical - base_thickness_1
-size_z_btm = 100
-olist.append( {"OBJ": "CUBE", "name": "C-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[13],} )
 
-alist.append({"function": "booleanFnc", "args": ["C-BOTTOM-01","C-HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["C-BOTTOM-02","C-HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["C-BOTTOM-03","C-HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["C-BOTTOM-04","C-HOLE-01"]})
-alist.append({"function": "deleteFnc", "args": ["C-HOLE-01"]})
+alist.append({"function": "rotateFnc", "args": ["FUTA-M-01",180,0,0]})
+alist.append({"function": "moveFnc2",  "args": ["FUTA-M-01",-39.8,0,0.5]})
+alist.append({"function": "moveFnc2",  "args": ["FUTA-M-02",-45.3,0,-2]})
 
-alist.append({"function": "copyFnc", "args": ["B-HOJO-01", "C-HOJO-01",-100,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["C-HOJO-01", "C-HOJO-02",-49.9, 0, 0]})
 
-alist.append({"function": "copyFnc", "args": ["C-HOJO-01", "C-HOJO-03",-49.9/2, -49.9*0.5, 0]})
-alist.append({"function": "rotateFnc", "args": ["C-HOJO-03",0,0,90]})
+# --- ↑↑ レール ↑↑ --- #
 
-alist.append({"function": "copyFnc", "args": ["C-HOJO-03", "C-HOJO-04", 0, 49.9, 0]})
 
+# --- ↓↓ 側面の留め具 ↓↓ --- #
+#"""
+olist.append( {"OBJ": "CUBE", "name": "Side-M-01", "location": (0,0,1), "size": (15, 34, 2), "rotation": (0,0,0), "material": mlist[10],} )
+olist.append( {"OBJ": "CUBE", "name": "Side-M-02", "location": (0,0,3), "size": (15, 10, 2), "rotation": (0,0,0), "material": mlist[11],} )
+olist.append( {"OBJ": "CUBE", "name": "Side-M-03", "location": (0,0,5), "size": (15, 14, 2), "rotation": (0,0,0), "material": mlist[12],} )
 
+# 磁石穴
+olist.append( {"OBJ": "CYLINDER","name": "Side-B-01-Magnet", "location": (0, 0, 4.6),"radius": 3.2,"depth": 3.0,"rotation": (0,0,0),"material": mlist[89],} )
 
+# ブーリアン
+alist.append({"function": "booleanFnc", "args": ["Side-M-02","Side-B-01-Magnet"]})
+alist.append({"function": "booleanFnc", "args": ["Side-M-03","Side-B-01-Magnet"]})
 
-alist.append({"function": "copyFnc", "args": ["B-TOTE-01", "C-TOTE-01",-149.9,  0, 0]})
-alist.append({"function": "copyFnc", "args": ["C-TOTE-01", "C-TOTE-02",   0, 50, 0]})
+# 削除
+alist.append({"function": "deleteFnc", "args": ["Side-B-01-Magnet"]})
+#"""
+# --- ↑↑ 側面の留め具 ↑↑ --- #
 
 
+# ----------------------------
+"""
+olist.append( {"OBJ": "CUBE",    "name": "FUTA-M-11", "location": (-39.8, 0, -1.5), "size": (19.7, 34, 3), "rotation": (0,0,0), "material": mlist[70],} )
+olist.append( {"OBJ": "CUBE",    "name": "FUTA-M-12", "location": (-45.3, 0, 1), "size": (9, 34, 2), "rotation": (0,0,0), "material": mlist[71],} )
+olist.append( {"OBJ": "CUBE",    "name": "CHOBAN-B-14", "location": (-33.8 , 0, -1.8), "size": (8, 24, 0.6), "rotation": (0,0,0), "material": mlist[71],} )
+olist.append( {"OBJ": "CYLINDER","name": "CHOBAN-B-15", "location": (-33.2, 7.4, -0.5),"radius": 1.3,"depth": 8.0,"rotation": (0,0,0),"material": mlist[79],} )
+olist.append( {"OBJ": "CYLINDER","name": "CHOBAN-B-16", "location": (-33.2,-7.4, -0.5),"radius": 1.3,"depth": 8.0,"rotation": (0,0,0),"material": mlist[79],} )
+olist.append( {"OBJ": "CUBE",    "name": "FUTA-B-11", "location": (-46 , 0, 0), "size": (8, 45, 8), "rotation": (0,0,0), "material": mlist[51],} )
+#olist.append( {"OBJ": "CUBE",    "name": "KADO-B-11", "location": (-27 , 0, 1), "size": (8, 36, 8), "rotation": (0,0,0), "material": mlist[57],} )
+#alist.append({"function": "rotateFnc", "args": ["KADO-B-11",0,60,0]})
 
-
-
-##--- BOTTOM GUIDE ---##
-
-guide_rate = 1.05
-
-locate_x = -mdf_vertical /4
-locate_y = -100-mdf_vertical /4
-locate_z = 0
-size_x = box_vertical
-size_y = box_horizontal
-size_z_btm = base_depth
-size_z_top = box_depth
-
-olist.append( {"OBJ": "CUBE", "name": "Z-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[60],} )
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 4, box_btm_rate,box_btm_rate,1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 5, 1.1,1.1,1.1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 4, 1.1,1.1,1.1]})
-
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 5, guide_rate,guide_rate,guide_rate]})
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 4, guide_rate,guide_rate,guide_rate]})
-
-
-locate_x = -mdf_vertical /4
-locate_y = -100+mdf_vertical /4
-locate_z = 0
-size_x = box_vertical
-size_y = box_horizontal
-size_z_btm = base_depth
-size_z_top = box_depth
-
-olist.append( {"OBJ": "CUBE", "name": "Z-HOLE-02", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[61],} )
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-02", 4, box_btm_rate,box_btm_rate,1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-02", 5, 1.1,1.1,1.1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-02", 4, 1.1,1.1,1.1]})
-
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-02", 5, guide_rate,guide_rate,guide_rate]})
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-02", 4, guide_rate,guide_rate,guide_rate]})
-
-
-
-
-locate_x = -mdf_vertical /4 + mdf_vertical /2
-locate_y = -100+mdf_vertical /4
-locate_z = 0
-size_x = box_vertical
-size_y = box_horizontal
-size_z_btm = base_depth
-size_z_top = box_depth
-
-olist.append( {"OBJ": "CUBE", "name": "Z-HOLE-03", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[62],} )
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-03", 4, box_btm_rate,box_btm_rate,1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-03", 5, 1.1,1.1,1.1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-03", 4, 1.1,1.1,1.1]})
-
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-03", 5, guide_rate,guide_rate,guide_rate]})
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-03", 4, guide_rate,guide_rate,guide_rate]})
-
-
-
-
-locate_x = -mdf_vertical /4 + mdf_vertical /2
-locate_y = -100-mdf_vertical /4
-locate_z = 0
-size_x = box_vertical
-size_y = box_horizontal
-size_z_btm = base_depth
-size_z_top = box_depth
-
-olist.append( {"OBJ": "CUBE", "name": "Z-HOLE-04", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[63],} )
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-04", 4, box_btm_rate,box_btm_rate,1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-04", 5, 1.1,1.1,1.1]})
-#alist.append({"function": "scaleMesh", "args": ["Z-HOLE-04", 4, 1.1,1.1,1.1]})
-
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-04", 5, guide_rate,guide_rate,guide_rate]})
-alist.append({"function": "scaleMesh", "args": ["Z-HOLE-04", 4, guide_rate,guide_rate,guide_rate]})
-
-
-
-
-locate_x = 0
-locate_y = -100
-locate_z = 0
-size_x = mdf_vertical
-size_y = mdf_vertical
-size_z_btm = base_depth *0.8
-
-olist.append( {"OBJ": "CUBE", "name": "Z-GUIDE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[70],} )
-
-
-
-alist.append({"function": "booleanFnc", "args": ["Z-GUIDE-01","Z-HOLE-01"]})
-alist.append({"function": "booleanFnc", "args": ["Z-GUIDE-01","Z-HOLE-02"]})
-alist.append({"function": "booleanFnc", "args": ["Z-GUIDE-01","Z-HOLE-03"]})
-alist.append({"function": "booleanFnc", "args": ["Z-GUIDE-01","Z-HOLE-04"]})
-
-alist.append({"function": "deleteFnc", "args": ["Z-HOLE-01"]})
-alist.append({"function": "deleteFnc", "args": ["Z-HOLE-02"]})
-alist.append({"function": "deleteFnc", "args": ["Z-HOLE-03"]})
-alist.append({"function": "deleteFnc", "args": ["Z-HOLE-04"]})
-
-
-
-
-
-
-
-locate_x = 0
-locate_y = -100
-locate_z = 7.3
-size_x = mdf_vertical
-size_y = mdf_vertical
-size_z_btm = base_depth *0.8
-
-olist.append( {"OBJ": "CUBE", "name": "Z-TOPHOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[71],} )
-
-alist.append({"function": "scaleMesh", "args": ["Z-TOPHOLE-01", 5, 1.1,1.1,1.1]})
-alist.append({"function": "scaleMesh", "args": ["Z-TOPHOLE-01", 4, 1.1,1.1,1.1]})
-
-alist.append({"function": "booleanFnc", "args": ["Z-GUIDE-01","Z-TOPHOLE-01"]})
-
-alist.append({"function": "deleteFnc", "args": ["Z-TOPHOLE-01"]})
-
-
+# ブーリアン
+#alist.append({"function": "booleanFnc", "args": ["FUTA-M-11","KADO-B-11"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-11","CHOBAN-B-14"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-11","CHOBAN-B-15"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-11","CHOBAN-B-16"]})
+
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-11","FUTA-B-11"]})
+alist.append({"function": "booleanFnc", "args": ["FUTA-M-12","FUTA-B-11"]})
+
+# 削除
+#alist.append({"function": "deleteFnc", "args": ["KADO-B-11"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-14"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-15"]})
+alist.append({"function": "deleteFnc", "args": ["CHOBAN-B-16"]})
+alist.append({"function": "deleteFnc", "args": ["FUTA-B-11"]})
+"""
+
+# ----------------------------
 
 
 
