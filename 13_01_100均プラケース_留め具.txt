@@ -198,8 +198,10 @@ def scaleFace(objName, faceNo, scale_factor):
 def addJoint(argObjects):
     """JOIN 複数オブジェクトをグループ化する"""
     
-    object_names = ["A-CONE01", "A-CONE02"]
-    #object_names = argObjects
+    object_names = argObjects
+
+    # 全ての選択を解除
+    bpy.ops.object.select_all(action='DESELECT')
 
     # オブジェクトを選択
     for obj_name in object_names:
@@ -332,8 +334,7 @@ def editFlow(args):
 
             case "addJoin":
                 """JOIN 複数オブジェクトをグループ化する大"""
-                addJoint(args)
-
+                addJoint(curObj["args"])
 
 ##-------------------------------##
 
