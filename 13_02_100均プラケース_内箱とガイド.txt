@@ -11,6 +11,10 @@ import bmesh
 import random
 import math
 
+import mathutils
+from mathutils import Vector  # 念のためVectorもインポート
+
+
 # 変数
 obj = bpy.data.objects
 olist = [] # オブジェクトパラメータ群
@@ -269,6 +273,76 @@ def rename_object(target_name, new_name):
 
 
 
+def move_object_origin(target_name, new_origin):
+    """オブジェクトの中心を指定した座標に移動する"""
+    try:
+        # オブジェクトを取得
+        obj = bpy.data.objects[target_name]
+
+        # アクティブオブジェクトに設定
+        bpy.context.view_layer.objects.active = obj
+        
+        # 現在のモードを保存
+        current_mode = bpy.context.object.mode
+
+        # オブジェクトモードに切り替える
+        if current_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        # オブジェクトの位置を設定
+        obj_origin_vec = Vector(new_origin)  # mathutils.Vector を使用
+        obj.location = obj_origin_vec
+
+        print(f"'{target_name}'の中心座標を{new_origin}に変更しました。")
+
+        # 元のモードに戻す
+        if current_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode=current_mode)
+    
+    except KeyError:
+        print(f"オブジェクト '{target_name}' が見つかりませんでした。")
+
+
+
+
+
+
+
+
+
+def reset_object_origin(target_name, new_origin):
+    """オブジェクトの原点を新しい座標に移動し、元のモードに戻す関数"""
+    try:
+        # オブジェクトを取得
+        obj = bpy.data.objects[target_name]
+        
+        # 現在のモードを保存
+        current_mode = bpy.context.object.mode
+        
+        # オブジェクトをアクティブにして選択
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.select_all(action='DESELECT')  # 他のオブジェクトの選択を解除
+        obj.select_set(True)
+        
+        # オブジェクトモードに切り替え
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
+        # オブジェクトの原点を移動
+        bpy.context.scene.cursor.location = mathutils.Vector(new_origin)  # カーソルを新しい原点に移動
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')  # カーソルの位置に原点を設定
+
+        print(f"'{target_name}'の原点を{new_origin}に修正しました。")
+    
+        # 元のモードに戻す
+        bpy.ops.object.mode_set(mode=current_mode)
+    
+    except KeyError:
+        print(f"オブジェクト '{target_name}' が見つかりませんでした。")
+
+
+
+
+
 
 
 
@@ -371,6 +445,20 @@ def editFlow(args):
             case "renameFnc":
                 """オブジェクト名を変更する(arg1:変更前、arg2:変更後)"""
                 rename_object(curObj["args"][0], curObj["args"][1])
+
+            case "moveOriginFnc":
+                """オブジェクトの中心を指定した座標に移動する"""
+                move_object_origin(curObj["args"][0], (curObj["args"][1], curObj["args"][2], curObj["args"][3]))
+
+            case "resetOriginFnc":
+                """オブジェクトの中心を指定した座標に移動する"""
+                reset_object_origin(curObj["args"][0], (curObj["args"][1], curObj["args"][2], curObj["args"][3]))
+
+
+
+
+
+
 
 ##-------------------------------##
 
@@ -674,8 +762,16 @@ alist.append({"function": "addJoin", "args": ["D-CENTER-01","D-HAKO-01","D-HAKO-
 #--- オブジェクト名を変更 ---#
 alist.append({"function": "renameFnc", "args": ["A-HAKO","HAKO-1x1-A"]})
 alist.append({"function": "renameFnc", "args": ["B-HAKO","HAKO-1x1-B"]})
-alist.append({"function": "renameFnc", "args": ["C-HAKO-01","HAKO-1x2"]})
+alist.append({"function": "renameFnc", "args": ["C-CENTER","HAKO-1x2"]})
 alist.append({"function": "renameFnc", "args": ["D-CENTER-01","HAKO-2x2"]})
+
+
+
+#オブジェクトの中心を指定した座標に移動する
+alist.append({"function": "moveOriginFnc", "args": ["HAKO-2x2",0,0,100]})
+#オブジェクトの中心を修正する
+alist.append({"function": "resetOriginFnc", "args": ["HAKO-2x2",0,0,100-29]})
+
 
 
 
