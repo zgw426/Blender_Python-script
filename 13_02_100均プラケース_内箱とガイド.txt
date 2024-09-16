@@ -1,0 +1,688 @@
+##---------------------------------------##
+##
+## ダイソープラケースにフィットする内箱とガイドを作る
+## (内寸 約165mm X 105mm)
+## 
+##---------------------------------------##
+
+
+import bpy
+import bmesh
+import random
+import math
+
+# 変数
+obj = bpy.data.objects
+olist = [] # オブジェクトパラメータ群
+mlist = [] # マテリアル群
+alist = [] # オブジェクト編集
+
+# 1.既存要素削除
+for item in bpy.data.meshes:
+    bpy.data.meshes.remove(item)
+
+# 2.材質の定義
+random.seed(110) # 乱数のシード設定
+for i in range(100):
+    mlist.append( bpy.data.materials.new('mat{}'.format(i) ) )
+    mlist[-1].diffuse_color = (random.random(), random.random(), random.random(), 1.0)
+
+##-------------------------------##
+def booleanFnc(obj01 , obj02):
+    """ブーリアン"""
+    bool01 = obj01.modifiers.new(type="BOOLEAN", name="bool_01")
+    bool01.object = obj02
+    bool01.operation = 'DIFFERENCE'
+    bpy.context.view_layer.objects.active = obj01
+    bpy.ops.object.modifier_apply(modifier="bool_01")
+
+
+def moveFnc(obj01, mX, mY, mZ):
+    """オブジェクト移動"""
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = ( mX, mY, mZ )
+
+
+def moveFnc2(obj01, pnt):
+    """オブジェクト移動2"""
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = pnt
+
+
+def moveFnc3(obj01, pnt, flg ):
+    """オブジェクト移動3 ※ flg=0 -> 現在座標 , flg=1 -> 移動"""
+    tgtX = obj01.location[0]
+    tgtY = obj01.location[1]
+    tgtZ = obj01.location[2]
+    
+    if flg[0] == 1:
+        tgtX = pnt[0]
+    if flg[1] == 1:
+        tgtY = pnt[1] 
+    if flg[2] == 1:
+        tgtZ = pnt[2]
+    
+    pnt = ( tgtX, tgtY, tgtZ )
+    
+    bpy.context.view_layer.objects.active = obj01
+    obj01.location = pnt
+    print("#2 {}".format(obj01.location) )
+    print("#3 {0} {1} {2}".format(pnt[0],pnt[1],pnt[2]) )
+
+
+def rotateFnc(obj01, angle):
+    """オブジェクト回転"""
+    bpy.context.view_layer.objects.active = obj01
+    obj01.rotation_euler = angle
+
+
+def hideFnc(obj01, setVal):
+    """オブジェクト非表示"""
+    bpy.context.view_layer.objects.active = obj01
+    bpy.context.object.hide_set( setVal )
+
+
+def deleteFnc(obj01):
+    """オブジェクト削除"""
+    bpy.data.objects.remove(obj01)
+
+
+def objCube(args):
+    """オブジェクト立方体作成"""
+    bpy.ops.mesh.primitive_cube_add(location=args["location"], size=1.0 , rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"])  #材質指定
+    bpy.ops.transform.resize(value=args["size"]) #図形変形
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+
+def objCylinder(args):
+    """オブジェクト円柱作成"""
+    bpy.ops.mesh.primitive_cylinder_add(location=args["location"], radius=args["radius"], depth=args["depth"], rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"]) #材質指定
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+
+def objHexaCylinder(args):
+    """オブジェクト六角柱作成"""
+    bpy.ops.mesh.primitive_cylinder_add(vertices = 6, location=args["location"], radius=args["radius"], depth=args["depth"], rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"]) #材質指定
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+
+def objCone(args):
+    """円錐"""
+    bpy.ops.mesh.primitive_cone_add(location=args["location"],vertices=args["vertices"],radius1=args["radius1"],radius2=args["radius2"],depth=args["depth"], rotation=args["rotation"])
+    bpy.context.object.data.materials.append(args["material"]) #材質指定
+    obj0 = bpy.context.view_layer.objects.active
+    obj0.name = args["name"]
+
+
+def bevelFnc(objName, segmentsVal, widthVal):
+    """ ベベル（角丸め） """
+    #bpy.context.view_layer.objects.active = objVal
+    bpy.context.view_layer.objects.active = obj[objName]
+    context = bpy.context
+    ob = context.object
+    bm = ob.modifiers.new(name="bevel", type='BEVEL',)
+    bm.segments = segmentsVal
+    bm.width = widthVal
+    bm.custom_profile.update() 
+
+
+def objCopy(objName, new_name, pnt):
+    """オブジェクトの複製"""
+    for obj in bpy.data.objects:
+        obj.select_set(False)
+    original_obj = bpy.data.objects[objName]
+    original_obj.select_set(True)
+    bpy.ops.object.duplicate_move(TRANSFORM_OT_translate={"value":pnt})
+    new_obj = bpy.data.objects[objName + ".001"]
+    new_obj.name = new_name
+
+
+def changeMode():
+    print( bpy.context.mode )
+    bpy.ops.object.mode_set(mode='EDIT', toggle=False) # 編集モードに移行する
+    print( bpy.context.mode )
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    print( bpy.context.mode )
+
+
+def moveMesh(objName, faceNo,pnt):
+    """面の押し出し"""
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.context.view_layer.objects.active = obj[objName]
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    # 全てのメッシュを非選択状態にする.
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # 面モードに設定.
+    bpy.ops.mesh.select_mode(type="FACE")
+    cube_bmesh = bmesh.from_edit_mesh(bpy.context.object.data)
+    cube_bmesh.faces.ensure_lookup_table()
+    cube_bmesh.faces[faceNo].select = True
+    bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={"value":pnt} )
+
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+
+
+
+
+def scaleFace(objName, faceNo, scale_factor):
+    """選択した面を拡大する"""
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.context.view_layer.objects.active = bpy.data.objects[objName]
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    # 全てのメッシュを非選択状態にする.
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # 面モードに設定.
+    bpy.ops.mesh.select_mode(type="FACE")
+    cube_bmesh = bmesh.from_edit_mesh(bpy.context.object.data)
+    cube_bmesh.faces.ensure_lookup_table()
+    cube_bmesh.faces[faceNo].select = True
+
+    # 面を拡大する.
+    bpy.ops.transform.resize(value=scale_factor)
+
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+
+def addJoint(argObjects):
+    """JOIN 複数オブジェクトをグループ化する"""
+    object_names = argObjects
+
+    # 全ての選択を解除
+    bpy.ops.object.select_all(action='DESELECT')
+
+    # オブジェクトを選択
+    for obj_name in object_names:
+        bpy.data.objects[obj_name].select_set(True)
+
+    # アクティブオブジェクトを設定（結合後の名前になります）
+    bpy.context.view_layer.objects.active = bpy.data.objects[object_names[0]]
+
+    # オブジェクトを結合
+    bpy.ops.object.join()
+
+
+
+
+
+
+
+def movePoint(objName, pointNo, pnt):
+    '''頂点モードにし, 一つの頂点を動かす'''
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.context.view_layer.objects.active = obj[objName]
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    # 全てのメッシュを非選択状態にする.
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    # 頂点モードに設定
+    bpy.ops.mesh.select_mode(type="VERT")
+    cube_bmesh = bmesh.from_edit_mesh(bpy.context.object.data)
+    cube_bmesh.verts.ensure_lookup_table()
+    cube_bmesh.verts[pointNo].select = True
+    bpy.ops.transform.translate(value=pnt)
+    # 標準モードに戻す
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+
+def expansionFnc(TARGET, THICKNESS02):
+    """ 拡大する """
+    global alist
+    THICKNESS01 = -1* THICKNESS02
+    alist.append({"function": "movePoint", "args": [TARGET, 0, THICKNESS01, THICKNESS01, THICKNESS01]})
+    alist.append({"function": "movePoint", "args": [TARGET, 2, THICKNESS01, THICKNESS02, THICKNESS01]})
+    alist.append({"function": "movePoint", "args": [TARGET, 4, THICKNESS02, THICKNESS01, THICKNESS01]})
+    alist.append({"function": "movePoint", "args": [TARGET, 6, THICKNESS02, THICKNESS02, THICKNESS01]})
+    alist.append({"function": "movePoint", "args": [TARGET, 1, THICKNESS01, THICKNESS01, THICKNESS02]})
+    alist.append({"function": "movePoint", "args": [TARGET, 3, THICKNESS01, THICKNESS02, THICKNESS02]})
+    alist.append({"function": "movePoint", "args": [TARGET, 5, THICKNESS02, THICKNESS01, THICKNESS02]})
+    alist.append({"function": "movePoint", "args": [TARGET, 7, THICKNESS02, THICKNESS02, THICKNESS02]})
+
+
+
+
+
+
+def rename_object(target_name, new_name):
+    """オブジェクトの名前を変更する関数"""
+    try:
+        # オブジェクトを検索
+        target_object = bpy.data.objects[target_name]
+        # 新しい名前を設定
+        target_object.name = new_name
+        print(f"オブジェクト名を'{target_name}'から'{new_name}'に変更しました。")
+    except KeyError:
+        print(f"オブジェクト '{target_name}' が見つかりませんでした。")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def creObjFlow(args):
+    """オブジェクト作成フロー"""
+    # オブジェクトの作成
+    for curObj in args:
+        match curObj["OBJ"]:
+            case "CUBE":
+                objCube(curObj)
+            case "CYLINDER":
+                objCylinder(curObj)
+            case "CONE":
+                objCone(curObj)
+            case "HEXA-CYLINDER":
+                objHexaCylinder(curObj)
+    # オブジェクトの編集
+    for curObj in args:
+        if "edit" in curObj:
+            for act in curObj["edit"]:
+                match act[0]:
+                    case "moveMesh":
+                        moveMesh(curObj["name"], act[1],act[2]) # 面の押し出し
+                    case "bevelFnc":
+                        bevelFnc(obj[ curObj["name"] ], act[1],act[2]) # 角丸め
+
+
+def editFlow(args):
+    """オブジェクトの編集"""
+    for curObj in args:
+        match curObj["function"]:
+            case "booleanFnc":
+                """ ブーリアン """
+                booleanFnc(obj[ curObj["args"][0] ],obj[ curObj["args"][1] ]) # 
+            case "deleteFnc":
+                """ 削除 """
+                deleteFnc(obj[ curObj["args"][0] ]) # 
+            case "moveFnc2":
+                """ 移動(Fnc2) """
+                pnt = (curObj["args"][1], curObj["args"][2], curObj["args"][3])
+                moveFnc2(obj[ curObj["args"][0] ], pnt ) 
+            case "moveFnc3":
+                """ 移動(Fnc3) """
+                moveFnc3(obj[ curObj["args"][0] ], curObj["args"][1], curObj["args"][2] ) # 
+            case "copyFnc":
+                """ 複製 """
+                pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
+                objCopy(curObj["args"][0], curObj["args"][1], pnt)
+            case "rotateFnc":
+                """ 回転 """
+                pnt_x = math.radians(float(curObj["args"][1]))
+                pnt_y = math.radians(float(curObj["args"][2]))
+                pnt_z = math.radians(float(curObj["args"][3]))
+                pnt = (pnt_x, pnt_y, pnt_z)
+                rotateFnc(obj[curObj["args"][0]], pnt)
+            case "movePoint":
+                """ 点の移動 """
+                objName = curObj["args"][0]
+                pointNo = curObj["args"][1]
+                pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
+                movePoint(objName, pointNo, pnt)
+            case "bevelFnc":
+                """ ベベル（角丸め） """
+                objName = curObj["args"][0]
+                segmentsVal = curObj["args"][1]
+                widthVal = curObj["args"][2]
+                bevelFnc(objName, segmentsVal, widthVal)
+            case "moveMesh":
+                """選択した面の押し出し"""
+                objName = curObj["args"][0]
+                faceNo = curObj["args"][1]
+                pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
+                moveMesh(objName, faceNo,pnt)
+
+            case "scaleMesh":
+                """選択した面の拡大"""
+                objName = curObj["args"][0]
+                faceNo = curObj["args"][1]
+                pnt = (curObj["args"][2], curObj["args"][3], curObj["args"][4])
+                scaleFace(objName, faceNo,pnt)
+
+            case "addJoin":
+                """JOIN 複数オブジェクトをグループ化する大"""
+                addJoint(curObj["args"])
+
+            case "renameFnc":
+                """オブジェクト名を変更する(arg1:変更前、arg2:変更後)"""
+                rename_object(curObj["args"][0], curObj["args"][1])
+
+##-------------------------------##
+
+
+rate = 1.0
+
+
+##--- 中箱 1x1 ---##
+
+locate_x = 0
+locate_y = 70
+locate_z = 4.0
+size_x = 49
+size_y = 49
+size_z_btm = 8
+size_z_top = 42
+size_thickness = 3
+box_btm_rate = 0.8
+
+base_thickness_1 = 3.0  # 厚み(mm)
+
+olist.append( {"OBJ": "CUBE", "name": "A-HAKO", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[30],} )
+alist.append({"function": "scaleMesh", "args": ["A-HAKO", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "moveMesh", "args": ["A-HAKO", 5, 0,0,size_z_top]})
+
+locate_x = 0
+locate_y = 70
+locate_z = 7.0
+size_x = 49 - size_thickness
+size_y = 49 - size_thickness
+size_z_btm = 8
+size_z_top = 42
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "A-HOLE", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[31],} )
+alist.append({"function": "scaleMesh", "args": ["A-HOLE", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "moveMesh", "args": ["A-HOLE", 5, 0,0,size_z_top]})
+
+alist.append({"function": "booleanFnc", "args": ["A-HAKO","A-HOLE"]})
+alist.append({"function": "deleteFnc", "args": ["A-HOLE"]})
+
+## 取っ手
+locate_x = -21.5
+locate_y = 70
+locate_z = 46
+size_x = base_thickness_1
+size_y = 30
+size_z_btm = 8
+
+olist.append( {"OBJ": "CUBE", "name": "A-TOTE-02", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[4],} )
+alist.append({"function": "scaleMesh", "args": ["A-TOTE-02", 2, 0.5,1,0.5]})
+
+
+
+##--- 中箱 1x2 ---##
+
+locate_x = 50
+locate_y = -25.5
+locate_z = 0
+size_x = 49
+size_y = 49
+size_z_btm = 8
+size_z_top = 42
+size_thickness = 3
+box_btm_rate = 0.8
+
+base_thickness_1 = 3.0  # 厚み(mm)
+
+olist.append( {"OBJ": "CUBE", "name": "C-HAKO-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[40],} )
+alist.append({"function": "scaleMesh", "args": ["C-HAKO-01", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "moveMesh", "args": ["C-HAKO-01", 5, 0,0,size_z_top]})
+
+alist.append({"function": "copyFnc", "args": ["C-HAKO-01", "C-HAKO-02", 0,  0, 0]})
+alist.append({"function": "moveFnc2", "args": ["C-HAKO-02", 50, 25.5, 0]})
+
+
+locate_x = 50
+locate_y = 0
+locate_z = 25
+size_x = 49
+size_y = size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "C-CENTER", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[50],} )
+
+locate_x = 50
+locate_y = 0
+locate_z = 25 + size_thickness
+size_x = 49 - size_thickness
+size_y = 10 + size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "C-CENTER-HOLE", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[51],} )
+
+
+
+
+
+locate_x = 50
+locate_y = -25.5
+locate_z = size_thickness
+size_x = 49 - size_thickness
+size_y = 49 - size_thickness
+size_z_btm = 8
+size_z_top = 42
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "C-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[41],} )
+alist.append({"function": "scaleMesh", "args": ["C-HOLE-01", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "moveMesh", "args": ["C-HOLE-01", 5, 0,0,size_z_top]})
+
+
+locate_x = 50
+locate_y = 25.5
+#locate_y = 36
+locate_z = size_thickness
+size_x = 49 - size_thickness
+size_y = 49 - size_thickness
+size_z_btm = 8
+size_z_top = 42
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "C-HOLE-02", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[43],} )
+alist.append({"function": "scaleMesh", "args": ["C-HOLE-02", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "moveMesh", "args": ["C-HOLE-02", 5, 0,0,size_z_top]})
+
+
+
+
+
+alist.append({"function": "booleanFnc", "args": ["C-HAKO-01","C-HOLE-01"]})
+alist.append({"function": "booleanFnc", "args": ["C-HAKO-02","C-HOLE-02"]})
+
+
+alist.append({"function": "booleanFnc", "args": ["C-HAKO-01","C-CENTER-HOLE"]})
+alist.append({"function": "booleanFnc", "args": ["C-HAKO-02","C-CENTER-HOLE"]})
+alist.append({"function": "booleanFnc", "args": ["C-CENTER","C-CENTER-HOLE"]})
+
+
+
+
+
+
+
+alist.append({"function": "deleteFnc", "args": ["C-HOLE-01"]})
+alist.append({"function": "deleteFnc", "args": ["C-HOLE-02"]})
+alist.append({"function": "deleteFnc", "args": ["C-CENTER-HOLE"]})
+
+
+
+
+##--- ガイド(BOTTOM GUIDE) ---##
+
+guide_rate = 1.05
+
+locate_x = 0
+locate_y = 70
+locate_z = 4.0
+size_x = 49
+size_y = 49
+size_z_btm = 8
+size_z_top = 42
+size_thickness = 3
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "Z-GUIDE", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[32],} )
+alist.append({"function": "scaleMesh", "args": ["Z-GUIDE", 5, guide_rate,guide_rate,guide_rate]})
+alist.append({"function": "scaleMesh", "args": ["Z-GUIDE", 4, guide_rate,guide_rate,guide_rate]})
+
+locate_x = 0
+locate_y = 70
+locate_z = 4.6
+size_x = 52
+size_y = 52
+size_z_btm = 9.4
+size_thickness = 3
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "Z-HOLE", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[33],} )
+alist.append({"function": "scaleMesh", "args": ["Z-HOLE", 4, box_btm_rate,box_btm_rate,1]})
+alist.append({"function": "scaleMesh", "args": ["Z-HOLE", 5, guide_rate,guide_rate,guide_rate]})
+alist.append({"function": "scaleMesh", "args": ["Z-HOLE", 4, guide_rate,guide_rate,guide_rate]})
+
+alist.append({"function": "booleanFnc", "args": ["Z-GUIDE","Z-HOLE"]})
+alist.append({"function": "deleteFnc", "args": ["Z-HOLE"]})
+
+
+
+locate_x = 0
+locate_y = 70
+locate_z = 9.2
+size_x = 52
+size_y = 52
+size_z_btm = 8
+size_z_top = 42
+size_thickness = 3
+box_btm_rate = 0.8
+
+olist.append( {"OBJ": "CUBE", "name": "Z-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z_btm), "rotation": (0,0,0), "material": mlist[34],} )
+alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 5, guide_rate,guide_rate,guide_rate]})
+alist.append({"function": "scaleMesh", "args": ["Z-HOLE-01", 4, guide_rate,guide_rate,guide_rate]})
+
+alist.append({"function": "booleanFnc", "args": ["Z-GUIDE","Z-HOLE-01"]})
+alist.append({"function": "deleteFnc", "args": ["Z-HOLE-01"]})
+
+
+
+#----#
+
+alist.append({"function": "moveFnc2", "args": ["A-HAKO", 0, -25, 0]})
+alist.append({"function": "moveFnc2", "args": ["A-TOTE-02", -21.5, -25, 42]})
+
+alist.append({"function": "copyFnc", "args": ["A-HAKO", "B-HAKO", 0, 50, 0]})
+alist.append({"function": "copyFnc", "args": ["A-TOTE-02", "B-TOTE", 0, 50, 0]})
+
+alist.append({"function": "moveFnc2", "args": ["Z-GUIDE", 0, -25, 0]})
+alist.append({"function": "copyFnc", "args": ["Z-GUIDE", "Z-GUIDE-02", 0, 50, 0]})
+alist.append({"function": "copyFnc", "args": ["Z-GUIDE", "Z-GUIDE-03", 50, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["Z-GUIDE-02", "Z-GUIDE-04", 50, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["Z-GUIDE-03", "Z-GUIDE-05", 50, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["Z-GUIDE-04", "Z-GUIDE-06", 50, 0, 0]})
+
+
+
+
+alist.append({"function": "copyFnc", "args": ["A-TOTE-02", "C-TOTE-01", 50, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["B-TOTE", "C-TOTE-02", 50, 0, 0]})
+
+
+#-- 4x4 --#
+alist.append({"function": "copyFnc", "args": ["A-TOTE-02", "D-TOTE-02", 0, 0, 100]})
+alist.append({"function": "copyFnc", "args": ["A-HAKO", "D-HAKO-01", 0, 0, 100]})
+alist.append({"function": "copyFnc", "args": ["B-TOTE", "D-TOTE", 0, 0, 100]})
+alist.append({"function": "copyFnc", "args": ["B-HAKO", "D-HAKO-02", 0, 0, 100]})
+alist.append({"function": "copyFnc", "args": ["D-HAKO-01", "D-HAKO-03", 50, 0, 0]})
+alist.append({"function": "copyFnc", "args": ["D-HAKO-02", "D-HAKO-04", 50, 0, 0]})
+
+
+
+locate_x = 25
+locate_y = 0
+locate_z = 125
+size_x = 99
+size_y = size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "D-CENTER-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[50],} )
+
+locate_x = 25
+locate_y = 0
+locate_z = 125 + size_thickness
+size_x = 99 - size_thickness
+size_y = 10 + size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "D-CENTER-HOLE-01", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[51],} )
+
+
+
+locate_x = 25
+locate_y = 0
+locate_z = 125
+size_y = 99
+size_x = size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "D-CENTER-02", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[70],} )
+
+locate_x = 25
+locate_y = 0
+locate_z = 125 + size_thickness
+size_y = 99 - size_thickness
+size_x = 10 + size_thickness
+size_z = 42
+size_thickness = 3
+olist.append( {"OBJ": "CUBE", "name": "D-CENTER-HOLE-02", "location": (locate_x, locate_y, locate_z), "size": (size_x, size_y, size_z), "rotation": (0,0,0), "material": mlist[71],} )
+
+
+alist.append({"function": "booleanFnc", "args": ["D-CENTER-01","D-CENTER-HOLE-01"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-01","D-CENTER-HOLE-01"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-02","D-CENTER-HOLE-01"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-03","D-CENTER-HOLE-01"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-04","D-CENTER-HOLE-01"]})
+alist.append({"function": "deleteFnc", "args": ["D-CENTER-HOLE-01"]})
+
+alist.append({"function": "booleanFnc", "args": ["D-CENTER-02","D-CENTER-HOLE-02"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-01","D-CENTER-HOLE-02"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-02","D-CENTER-HOLE-02"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-03","D-CENTER-HOLE-02"]})
+alist.append({"function": "booleanFnc", "args": ["D-HAKO-04","D-CENTER-HOLE-02"]})
+alist.append({"function": "deleteFnc", "args": ["D-CENTER-HOLE-02"]})
+
+
+
+#--- グループ化 ---#
+alist.append({"function": "addJoin", "args": ["A-HAKO","A-TOTE-02"]})
+alist.append({"function": "addJoin", "args": ["B-HAKO","B-TOTE"]})
+alist.append({"function": "addJoin", "args": ["C-CENTER","C-HAKO-01","C-HAKO-02","C-TOTE-01","C-TOTE-02"]})
+alist.append({"function": "addJoin", "args": ["D-CENTER-01","D-HAKO-01","D-HAKO-02","D-HAKO-03","D-HAKO-04","D-TOTE","D-TOTE-02","D-CENTER-02"]})
+
+#--- オブジェクト名を変更 ---#
+alist.append({"function": "renameFnc", "args": ["A-HAKO","HAKO-1x1-A"]})
+alist.append({"function": "renameFnc", "args": ["B-HAKO","HAKO-1x1-B"]})
+alist.append({"function": "renameFnc", "args": ["C-HAKO-01","HAKO-1x2"]})
+alist.append({"function": "renameFnc", "args": ["D-CENTER-01","HAKO-2x2"]})
+
+
+
+
+#############################################
+# 処理開始
+## オブジェクト作成
+creObjFlow(olist)
+## オブジェクト加工
+editFlow(alist)
