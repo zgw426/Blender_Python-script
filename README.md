@@ -57,11 +57,11 @@ obniz Board 1Y を固定するブロック
 ### 11_カップ置き.txt
 
 - カップ置き
-
-<img src="./parts/11_cupholder.png" width="300">
-
+    - <img src="./parts/11_cupholder.png" width="300">
 
 ### 13_100均プラケースの縦置きと内分け
+
+<img src="./parts/13_00_01.png" width="300">
 
 - 13_01_100均プラケース_留め具.txt
     - <img src="./parts/13_01_01.png" width="300">
