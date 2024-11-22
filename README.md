@@ -59,7 +59,7 @@ obniz Board 1Y を固定するブロック
 - カップ置き
     - <img src="./parts/11_cupholder.png" width="300">
 
-### 13_100均プラケースの縦置きと内分け
+### 13_100均プラケースの縦置きと内分けの箱
 
 <img src="./parts/13_00_01.png" width="300">
 
